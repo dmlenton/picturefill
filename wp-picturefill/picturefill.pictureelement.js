@@ -116,14 +116,8 @@
 							if( screenRes >= resMatch ) {
 								if( picImg.getAttribute( "src" ) !== source[0] ) {
 									var newImg = document.createElement("img");
-
 									newImg.src = source[0];
 									newImg.alt = picImg.alt;
-									// When the image is loaded, set a width equal to that of the original’s intrinsic width divided by the screen resolution:
-									newImg.onload = function() {
-										// Clone the original image into memory so the width is unaffected by page styles:
-										this.width = ( this.cloneNode( true ).width / resMatch );
-									}
 									picImg.parentNode.replaceChild( newImg, picImg );
 								}
 								break; // We’ve matched, so bail out of the loop here.
