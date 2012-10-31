@@ -14,6 +14,8 @@ add_filter('upload_mimes', 'wppf_upload_mimes');
 add_filter('the_content', 'wppf_content');
 add_filter("attachment_fields_to_edit", "wppf_svg_field_edit", null, 2);
 add_filter("attachment_fields_to_save", "wppf_svg_field_save", null, 2);
+/* Add picturefill <picture> support to captioned images */
+add_filter('img_caption_shortcode', 'wppf_caption', 10, 3);
 
 if (!function_exists('get_attachment_id')) {
 	/**
@@ -24,12 +26,12 @@ if (!function_exists('get_attachment_id')) {
 	 */
 	function get_attachment_id($url) {
 		$dir = wp_upload_dir();
-
+		
 		$home_url = home_url();
 		if (strpos($home_url, $url) !== 0) {
 			$url = trim($home_url, '/') . '/' . trim($url, '/');
 		}
-
+		
 		$file  = basename($url);
 		$query = array(
 			'post_type'  => 'attachment',
@@ -119,7 +121,9 @@ if (!function_exists('wppf_svg_field_save')) {
 
 if (!function_exists('wppf_script')) {
 	function wppf_script() {
+		wp_register_script('matchmedia', plugins_url( 'matchMedia.js', __FILE__ ));
 		wp_register_script('picturefill', plugins_url( 'picturefill.pictureelement.js', __FILE__ ));
+		wp_enqueue_script('matchmedia');
 		wp_enqueue_script('picturefill');
 	}
 }
@@ -201,5 +205,54 @@ if (!function_exists('wppf_replace')) {
 	}
 }
 
+if ( ! function_exists( 'wppf_caption' ) ) :
+	function wppf_caption( $output, $attr, $content ) {
+	
+		/* We're not worried abut captions in feeds, so just return the output here. */
+		if ( is_feed() )
+			return $output;
+	
+		/* Set up the default arguments. */
+		$defaults = array(
+			'id' => '',
+			'align' => 'alignnone',
+			'width' => '',
+			'caption' => ''
+		);
+	
+		/* Merge the defaults with user input. */
+		$attr = shortcode_atts( $defaults, $attr );
+	
+		/* If the width is less than 1 or there is no caption, return the content wrapped between the [caption]< tags. */
+		if ( 1 > $attr['width'] || empty( $attr['caption'] ) )
+			return $content;
+	
+		/* Set up the attributes for the caption <div>. */
+		$attributes = ( !empty( $attr['id'] ) ? ' id="' . esc_attr( $attr['id'] ) . '"' : '' );
+		$attributes .= ' class="wp-caption ' . esc_attr( $attr['align'] ) . '"';
+		$attributes .= ' style="width: ' . esc_attr( $attr['width'] ) . 'px"';
+	
+		/* Open the caption <div>. */
+		$output = '<div' . $attributes .'>';
+	
+		/* Allow shortcodes for the content the caption was created for. */
+		$content = do_shortcode( $content );
+		if (function_exists('wppf_replace')) {
+			$output .= preg_replace_callback('/<img[^>]+\>/i', "wppf_replace", $content);
+		}
+		else {
+			$output .= $content;
+		}
+	
+		/* Append the caption text. */
+		$output .= '<p class="wp-caption-text">' . $attr['caption'] . '</p>';
+	
+		/* Close the caption </div>. */
+		$output .= '</div>';
+	
+		/* Return the formatted, clean caption. */
+		return $output;
+	}
+endif;
 
 ?>
