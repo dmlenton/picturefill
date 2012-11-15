@@ -15,7 +15,7 @@ add_filter('the_content', 'wppf_content');
 add_filter("attachment_fields_to_edit", "wppf_svg_field_edit", null, 2);
 add_filter("attachment_fields_to_save", "wppf_svg_field_save", null, 2);
 /* Add picturefill <picture> support to captioned images */
-add_filter('img_caption_shortcode', 'wppf_caption', 10, 3);
+add_filter('img_caption_shortcode', 'wppf_caption',null,3);
 
 if (!function_exists('get_attachment_id')) {
 	/**
@@ -28,10 +28,10 @@ if (!function_exists('get_attachment_id')) {
 		$dir = wp_upload_dir();
 		
 		$home_url = home_url();
-		if (strpos($home_url, $url) !== 0) {
+		if (strpos($home_url, $url) !== 0 && strpos($home_url, $url)!=null) {
 			$url = trim($home_url, '/') . '/' . trim($url, '/');
 		}
-		
+
 		$file  = basename($url);
 		$query = array(
 			'post_type'  => 'attachment',
@@ -191,10 +191,10 @@ if (!function_exists('wppf_replace')) {
 				<source media="(min-width: 85em)" src="' . $attachment_image[0] . '">
 
 				<!-- Fallback content for non-JS browsers. Same img src as the initial, unqualified source element. -->
-				<noscript><img src="' . $attachment_image_medium[0] . '"';
+				<noscript><img src="' . $attachment_image_medium[0] . '" ';
 		foreach ($attributes as $key => $attribute) {
 			if ($values[$key] != '') {
-				$output .= $attribute . '="' . $values[$key] . '"';
+				$output .= $attribute . '="' . $values[$key] . '" ';
 			}
 		}
 		$output .= ' /></noscript>
@@ -206,7 +206,7 @@ if (!function_exists('wppf_replace')) {
 }
 
 if ( ! function_exists( 'wppf_caption' ) ) :
-	function wppf_caption( $output, $attr, $content ) {
+	function wppf_caption( $output, $attr=null, $content=null ) {
 	
 		/* We're not worried abut captions in feeds, so just return the output here. */
 		if ( is_feed() )
